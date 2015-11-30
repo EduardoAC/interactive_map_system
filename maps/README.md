@@ -16,6 +16,11 @@ Adittionally we will need Topojson to translate from geoJSON output to topojson 
 
 For a complete description follow the Tom Noda explanation in ["Interactive Map with d3.js"](http://www.tnoda.com/blog/2013-12-07).
 
+NOTE 1: Keep the same name "countries.json" after you simplify with mapshaper in order case you will have adittional nested level that d3 library won't be able to process to parse the map
+
+NOTE 2: The objects names need to be consistent so 
+- "country_divisions.topo.json" file will contain object called "states"
+- "country_cities.topo.json" file will contain object called "cities"
 
 ## Integration with this library
 
