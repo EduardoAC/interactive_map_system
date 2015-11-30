@@ -1,8 +1,8 @@
 # Iteractive Map Folder system
 ## Folders Structure
 - Maps/ : it will store all the maps availables to use including countries and cities
--- Maps/Countries: contains country maps with the specific information of each country based in ISO ALPHA-3 code
---- Maps/Countries/{ISO-ALPHA-3}: contains all the information for code country as cities and politican divisions
+  - Maps/Countries: contains country maps with the specific information of each country based in ISO ALPHA-3 code
+    - Maps/Countries/{ISO-ALPHA-3}: contains all the information for code country as cities and politican divisions
 
 # Create your own map
 
@@ -21,7 +21,18 @@ For a complete description follow the Tom Noda explanation in ["Interactive Map 
 
 1. Create a country file in maps/countries with {ISO-ALPHA-3} code, example Unites States have USA code then the folder will be maps/countries/usa
 2. Create politics division for the country called "country_divisions.topo.json".
-3. Create cities locations for the country called "country_cities.topo.json"
+```
+ ogr2ogr -f GeoJSON -where "gu_a3 = '{ISO-ALPHA-3}'" country_divisions.json ne_10m_admin_1_states_provinces_lakes.shp
+ Upload and simplify in http://mapshaper.org/ (Suggested Visvalingam / weighted area with 10%)
+ Export result from mapshaper to geoJSON file named "country_divisions.json"
+ topojson --id-property adm1_cod_1 -p name -o country_divisions.topo.json country_divisions.json
+```
+3. Create cities locations for the country called "country_cities.topo.json" (SCALERANK DEPENDS OF DISTANCE, CHECK IF YOU HAVE ALL THE CITIES YOU NEED)
+```
+ ogr2ogr -f GeoJSON -where "ADM0_A3 = '{ISO-ALPHA-3}' and SCALERANK <= {SCALE}" cities.json ne_10m_populated_places.shp
+topojson -p name=NAME,state=ADM1NAME -o country_cities.topo.json cities.json
+```
+
 
 Then you will be ready to use your created country in the library.
 

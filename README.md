@@ -13,5 +13,5 @@ Based on his work I decided to start my own github repository that will have an 
 
 ### Folders
 - Maps/ : it will store all the maps availables to use including countries and cities
--- Maps/Countries: contains country maps with the specific information of each country based in ISO ALPHA-3 code
---- Maps/Countries/{ISO-ALPHA-3}: contains all the information for code country as cities and politican divisions
+  - Maps/Countries: contains country maps with the specific information of each country based in ISO ALPHA-3 code
+    - Maps/Countries/{ISO-ALPHA-3}: contains all the information for code country as cities and politican divisions
