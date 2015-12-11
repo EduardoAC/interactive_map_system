@@ -1,0 +1,68 @@
+/*
+All license rights are included LICENSE file at top of this repository
+Read the terms before use it
+*/
+/* 
+    Created on : 10-dic-2015, 9:05:59
+    Author     : EduardoAC <Eduardo Aparicio Cardenes at Dream Maker Factory Ltd>
+*/
+body{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0px;
+}
+#map {
+  background-color: #73b6e6;
+  border: 1px solid #ccc;
+}
+.background {
+  fill: none;
+  pointer-events: all;
+  background-color: #73b6e6;
+}
+/*        #countries, #states {
+  fill: #cde;
+  stroke: #fff;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}*/
+#countries .active, #states .active {
+  fill: #89a;
+}
+#cities {
+  stroke-width: 0;
+}
+.city {
+  fill: #345;
+  stroke: #fff;
+}
+.countries,#countries, #states {
+    fill: #b0d0ab;
+    stroke: #6cb0e0;
+    stroke-width: 0.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+.airports {
+    fill: #036;
+    stroke: #6cb0e0;
+    stroke-width: 0.01px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+pre.prettyprint {
+  border: 1px solid #ccc;
+  margin-bottom: 0;
+  padding: 9.5px;
+}
+.route {
+  fill: none;
+  stroke: white;
+  stroke-width: 1px;
+}
+.plane {
+  fill: #fff;
+  stroke-width: 0;
+}
