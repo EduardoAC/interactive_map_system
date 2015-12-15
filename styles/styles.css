@@ -36,6 +36,9 @@ body{
   fill: #345;
   stroke: #fff;
 }
+.country:hover{
+    fill: #22aa44;
+}
 .countries,#countries, #states {
     fill: #b0d0ab;
     stroke: #6cb0e0;

@@ -106,6 +106,7 @@ iMap.prototype.loaded = function(error, data){
         .enter()
         .append("path")
         .attr("id", function(d) { return d.id; })
+        .attr("class", function(d) { return "country"; })
         .attr("d", _self.mapPath);
 //        .on("click", country_clicked);
     _self.eventSystem();
