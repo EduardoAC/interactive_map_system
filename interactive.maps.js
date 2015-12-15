@@ -71,7 +71,7 @@ iMap.prototype.initialization = function(){
         .attr("width", width)
         .attr("height", height);
 
-    _self.mapContainer = _self.mapSVG.append("g");
+    _self.mapContainer = _self.mapSVG.append("g");    
 };
 iMap.prototype.applyTransform = function(){
     var _self = this;
@@ -92,9 +92,9 @@ iMap.prototype.applyTransformParams = function(scale, transX, transY) {
 }
 
 
-iMap.prototype.loaded = function(error, countries){
+iMap.prototype.loaded = function(error, data){
     var _self = this;
-    
+    var countries = data[0];
     _self.initialization();
     
     //Remember that interactive_map_system should be replace with the url to the file
@@ -109,6 +109,8 @@ iMap.prototype.loaded = function(error, countries){
         .attr("d", _self.mapPath);
 //        .on("click", country_clicked);
     _self.eventSystem();
+    _self.drawTransformArrows(_self.mapSVG);
+
 };
 
 iMap.prototype.resize = function(_self, event){
@@ -117,6 +119,78 @@ iMap.prototype.resize = function(_self, event){
             .attr("width", w)
             .attr("height", w * _self.mHeight / _self.mWidth);
 };
+iMap.prototype.drawTransformArrows = function(wrapper){
+    var _self = this;
+    var group = wrapper.append("g");
+    //Circle around transform arrows
+    group.append("circle")
+        .attr("cx", "50")
+        .attr("cy", "50")
+        .attr("r", "42")
+        .attr("fill", "white")
+        .attr("opacity","0.75");
+    //Vertical arrow
+    group.append("path")
+        .attr("class", "button")
+        .attr("d", "M50 10 l12 20 a40,70 0 0,0 -24,0z")
+        .on("click",function(){_self.panning(0,50)});
+    //Right arrow
+    group.append("path")
+        .attr("class", "button")
+        .attr("d", "M10 50 l20 -12 a70,40 0 0,0 0,24z")
+        .on("click",function(){_self.panning(50,0)});
+    //Bottom arrow
+    group.append("path")
+        .attr("class", "button")
+        .attr("d", "M50 90 l12 -20 a40,70 0 0,1 -24,0z")
+        .on("click",function(){_self.panning(0,-50)});
+    //Left arrow
+    group.append("path")
+        .attr("class", "button")
+        .attr("d", "M90 50 l-20 -12 a70,40 0 0,1 0,24z")
+        .on("click",function(){_self.panning(-50,0)});
+    //Internal circle that contains zoom transforms
+    group.append("circle")
+        .attr("class", "compass")
+        .attr("cx", "50")
+        .attr("cy", "50")
+        .attr("r", "20");
+    //Internal circle that contain zoom out
+    group.append("circle")
+        .attr("class", "button")
+        .attr("cx", "50")
+        .attr("cy", "41")
+        .attr("r", "8")
+        .on("click",function(){_self.zooming(-0.5)});
+    //Internal circle that contain zoom in
+    group.append("circle")
+        .attr("class", "button")
+        .attr("cx", "50")
+        .attr("cy", "59")
+        .attr("r", "8")
+        .on("click",function(){_self.zooming(+0.5)});
+    //Horizontal arrow in zoom out
+    group.append("rect")
+        .attr("class", "plus-minus")
+        .attr("x", "46")
+        .attr("y", "39.5")
+        .attr("width", "8")
+        .attr("height", "3");
+    //Horizontal arrow in zoom in
+    group.append("rect")
+        .attr("class", "plus-minus")
+        .attr("x", "46")
+        .attr("y", "57.5")
+        .attr("width", "8")
+        .attr("height", "3");
+    //Vertical arrow in zoom in
+    group.append("rect")
+        .attr("class", "plus-minus")
+        .attr("x", "48.5")
+        .attr("y", "55")
+        .attr("width", "3")
+        .attr("height", "8");
+}
 iMap.prototype.mouseInteractions = function(){
     var _self = this;
     var scale = 2;
@@ -124,14 +198,10 @@ iMap.prototype.mouseInteractions = function(){
     var oldPX = 1;
     var oldPY = 1;
     _self.mapWrapper.on("mousedown",function(event){
-        console.log("click mouse");
         oldPX = event.pageX;
         oldPY = event.pageY;
         _self.mapWrapper.on("mousemove",function(e){
-            console.log("mover mouse 1");
-            _self.transform.transX += (e.pageX - oldPX)*invscale;
-            _self.transform.transY += (e.pageY - oldPY)*invscale;
-            _self.applyTransform();
+            _self.panning((e.pageX - oldPX)*invscale,(e.pageY - oldPY)*invscale);
 //            _self.mapContainer.attr("transform", "translate(" + incX +","+incY + ")scale(" + scale + ")");
             //.translate(function(){return [incX, incY]});
             oldPX = e.pageX;
@@ -139,20 +209,32 @@ iMap.prototype.mouseInteractions = function(){
         });
     });
     _self.mapWrapper.on("mouseup",function(){
-        console.log("unclick mouse");
         _self.mapWrapper.off("mousemove");
     });
     _self.mapWrapper.on("mousewheel",function(e){
-        console.log("unclick mouse");
+        var scale = 0;
         if(e.originalEvent.wheelDelta /120 > 0){
-            _self.transform.scale += 0.25; 
+            scale = 0.5; 
         }else{
-            _self.transform.scale -= 0.25; 
+            scale = -0.5; 
         }
-       
-        _self.transform.scale = (_self.transform.scale < 1)? 1:_self.transform.scale;
-        _self.applyTransform();
+        _self.zooming(scale);
     });
+};
+iMap.prototype.panning = function(Dx,Dy){
+    var _self = this;
+    _self.transform.transX += Dx;
+    _self.transform.transY += Dy;
+    _self.applyTransform();
+};
+iMap.prototype.zooming = function(scale){
+    var _self = this;
+    _self.transform.scale += scale;
+    _self.transform.scale = (_self.transform.scale < 1)? 1:_self.transform.scale;
+    _self.transform.scale = (_self.transform.scale > 6)? 6:_self.transform.scale;
+//    _self.transform.transX += (1-scale) * _self.transform.width / 2;
+//    _self.transform.transY += (1-scale) * _self.transform.height/ 2;
+    _self.applyTransform();
 };
 iMap.prototype.eventSystem = function(){
     var _self = this;
@@ -164,6 +246,6 @@ iMap.prototype.eventSystem = function(){
     $(window).resize(resize);
     
     //Mouse events
-    _self.mouseInteractions();
+//    _self.mouseInteractions();
     
 };

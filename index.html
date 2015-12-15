@@ -25,13 +25,15 @@ and open the template in the editor.
                 height: 500
             });
 
-            var loaded = function(error, countries){
-                iMapObj.loaded(error,countries);
+            var loaded = function(error, data){
+                iMapObj.loaded(error, data);
             };
+            
+            var server_base_url = '/interactive_map_system';
             
             queue().defer(d3.json, server_base_url + "/maps/countries.topo.json")
   //                 .defer(d3.json, server_base_url + "/maps/airports.topo.json")
-                   .await(loaded);
+                   .awaitAll(loaded);
         </script>
     </body>
 </html>
