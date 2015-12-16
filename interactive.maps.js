@@ -20,7 +20,7 @@ function iMap(mapId,parameters){
         transX: 0,
         transY: 0,
         width: 938,
-        height: 500
+        height: 438
     };
     this.initParameters = function(parameters){
         var _self = this;
@@ -116,7 +116,7 @@ iMap.prototype.loaded = function(error, data){
 
 iMap.prototype.resize = function(_self, event){
     var w = _self.mapWrapper.width();
-    _self.mapSvg
+    _self.mapSVG
             .attr("width", w)
             .attr("height", w * _self.mHeight / _self.mWidth);
 };
@@ -215,9 +215,9 @@ iMap.prototype.mouseInteractions = function(){
     _self.mapWrapper.on("mousewheel",function(e){
         var scale = 0;
         if(e.originalEvent.wheelDelta /120 > 0){
-            scale = 0.5; 
+            scale = 0.1; 
         }else{
-            scale = -0.5; 
+            scale = -0.1; 
         }
         _self.zooming(scale);
     });
@@ -247,6 +247,6 @@ iMap.prototype.eventSystem = function(){
     $(window).resize(resize);
     
     //Mouse events
-//    _self.mouseInteractions();
+    _self.mouseInteractions();
     
 };
