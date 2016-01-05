@@ -12,9 +12,15 @@ function iMap(mapId,parameters){
     this.mapSVG;
     this.mapBackground;
     this.mapContainer;
+    this.projection;
     this.mHeight;
     this.mWidth;
     this.mScale;
+    this.server_url;
+    this.country      = null;
+    this.country_code = null;
+    this.state        = null;
+    this.state_name   = null;
     this.transform = {
         scale: 2,
         transX: 0,
@@ -29,7 +35,10 @@ function iMap(mapId,parameters){
         _self.mScale  = (typeof parameters.scale !== "undefined")?parameters.scale:2;
         _self.transform.width  = _self.mWidth;
         _self.transform.height = _self.mHeight;
-
+        _self.server_url  = (typeof parameters.server_url !== "undefined")?parameters.server_url:null;
+        if(_self.server_url === null){
+            console.error("It couldn't find any server url element, it won't be able some features.");
+        }
     };
     this.initParameters(parameters);
 }
@@ -50,7 +59,7 @@ iMap.prototype.initialization = function(){
         width   = _self.mWidth,
         height  = _self.mHeight;
 
-    var projection = d3.geo
+    _self.projection = d3.geo
         .mercator()
         .scale(150)
         .translate([width / 2, height / 1.41]);
@@ -58,7 +67,7 @@ iMap.prototype.initialization = function(){
     _self.mapPath = d3.geo
         .path()
         .pointRadius(1)
-        .projection(projection);
+        .projection(_self.projection);
 
     _self.mapSVG = d3.select("#"+_self.mapId).append("svg")
         .attr("preserveAspectRatio", "xMidYMid")
@@ -88,7 +97,12 @@ iMap.prototype.applyTransform = function(){
 };
 iMap.prototype.applyTransformParams = function(scale, transX, transY) {
     var _self = this;
-    _self.mapContainer.attr("transform", "scale(" + scale + ") translate(" + transX + ", " + transY + ")")
+    _self.mapContainer
+        .attr("transform", "scale(" + scale + ") translate(" + transX + ", " + transY + ")")
+        .selectAll(["#countries", "#states", "#cities",".route",".airports"])
+        .style("stroke-width", 1.0 / scale + "px")
+        .selectAll(".city")
+        .attr("d", _self.mapPath.pointRadius(20.0 / scale));
 }
 
 
@@ -97,8 +111,12 @@ iMap.prototype.loaded = function(error, data){
     var countries = data[0];
     _self.initialization();
     
+    var country_clicked = function(d){
+        return _self.country_clicked(_self,d);
+    }
+    
     //Remember that interactive_map_system should be replace with the url to the file
-    _self.mapContainer.append("g")
+    var world_map = _self.mapContainer.append("g")
         .attr("id", "countries")
         .attr("class", "countries")
         .selectAll("path")
@@ -108,7 +126,10 @@ iMap.prototype.loaded = function(error, data){
         .attr("id", function(d) { return d.id; })
         .attr("class", function(d) { return "country"; })
         .attr("d", _self.mapPath);
-//        .on("click", country_clicked);
+
+    if(_self.server_url){
+        world_map.on("click", country_clicked);
+    }
     _self.eventSystem();
     _self.drawTransformArrows(_self.mapSVG);
 
@@ -212,15 +233,15 @@ iMap.prototype.mouseInteractions = function(){
     _self.mapWrapper.on("mouseup",function(){
         _self.mapWrapper.off("mousemove");
     });
-    _self.mapWrapper.on("mousewheel",function(e){
-        var scale = 0;
-        if(e.originalEvent.wheelDelta /120 > 0){
-            scale = 0.1; 
-        }else{
-            scale = -0.1; 
-        }
-        _self.zooming(scale);
-    });
+//    _self.mapWrapper.on("mousewheel",function(e){
+//        var scale = 0;
+//        if(e.originalEvent.wheelDelta /120 > 0){
+//            scale = 0.1; 
+//        }else{
+//            scale = -0.1; 
+//        }
+//        _self.zooming(scale);
+//    });
 };
 iMap.prototype.panning = function(Dx,Dy){
     var _self = this;
@@ -250,3 +271,102 @@ iMap.prototype.eventSystem = function(){
     _self.mouseInteractions();
     
 };
+
+iMap.prototype.country_clicked = function(mapObj,d) {
+    var _self = mapObj;
+    
+    _self.mapContainer.selectAll(["#states", "#cities"]).remove();
+    _self.state = null;
+
+    if (_self.country) {
+      _self.mapContainer.selectAll("#" + _self.country.id).style('display', null);
+    }
+
+    if (d && _self.country !== d) {
+      var xyz = _self.get_xyz(d);
+      _self.country = d;
+
+      var state_clicked = function(d){
+          return _self.state_clicked(_self,d);
+      };
+
+      d3.json(_self.server_url + "/maps/countries/" + d.id.toLowerCase() + "/country_divisions.topo.json", function(error, us) {
+          if(error === null || error.readyState === 4 && error.status === 200){
+              _self.mapContainer.append("g")
+                .attr("id", "states")
+                .selectAll("path")
+                .data(topojson.feature(us, us.objects.states).features)
+                .enter()
+                .append("path")
+                .attr("id", function(d) { return d.id; })
+                .attr("class", "active")
+                .attr("d", _self.mapPath)
+                .on("click", state_clicked);
+
+              _self.iZoom(xyz);
+              _self.mapContainer.selectAll("#" + d.id).style('display', 'none');
+          }else{
+              _self.iZoom(xyz);
+          }
+      });      
+    } else {
+      var xyz = [_self.mWidth / 2, _self.mHeight / 1.5, 1];
+      _self.country = null;
+      _self.iZoom(xyz);
+    }
+};
+
+iMap.prototype.state_clicked = function(mapObj, d) {
+    var _self = mapObj;
+    _self.mapContainer.selectAll("#cities").remove();
+
+    if (d && _self.state !== d) {
+      var xyz = _self.get_xyz(d);
+      _self.state = d;
+
+      _self.country_code = _self.state.id.substring(0, 3).toLowerCase();
+      _self.state_name = _self.state.properties.name;
+
+      d3.json(_self.server_url + "/maps/countries/" + _self.country_code + "/country_cities.topo.json", function(error, tCountry) {
+        _self.mapContainer.append("g")
+          .attr("id", "cities")
+          .selectAll("path")
+          .data(topojson.feature(tCountry, tCountry.objects.cities).features.filter(function(d) { 
+              return _self.state_name == d.properties.state;
+          }))
+          .enter()
+          .append("path")
+          .attr("id", function(d) { return d.properties.name; })
+          .attr("class", "city")
+          .attr("d", _self.mapPath.pointRadius(20 / xyz[2]));
+
+        _self.iZoom(xyz);
+      });      
+    } else {
+      _self.state = null;
+      _self.country_clicked(_self,_self.country);
+    }
+  };
+iMap.prototype.iZoom = function(xyz) {
+    var _self = this;
+    var point = _self.projection([xyz[0],xyz[1]]);
+    _self.transform.scale = xyz[2];
+    _self.mapContainer.transition()
+        .duration(750)
+        .attr("transform", "translate(" + _self.projection.translate() + ")scale(" + xyz[2] + ")translate(-" + xyz[0] + ",-" + xyz[1] + ")")
+        .selectAll(["#countries", "#states", "#cities",".route",".airports"])
+        .style("stroke-width", 1.0 / xyz[2] + "px")
+        .selectAll(".city")
+        .attr("d", _self.mapPath.pointRadius(20.0 / xyz[2]));
+};
+
+iMap.prototype.get_xyz = function(d) {
+    var _self = this;
+    var bounds = _self.mapPath.bounds(d);
+    var w_scale = (bounds[1][0] - bounds[0][0]) / _self.mWidth;
+    var h_scale = (bounds[1][1] - bounds[0][1]) / _self.mHeight;
+    var z = .96 / Math.max(w_scale, h_scale);
+    var x = (bounds[1][0] + bounds[0][0]) / 2;
+    var y = (bounds[1][1] + bounds[0][1]) / 2 + (_self.mHeight / z / 6);
+    return [x, y, z];
+}

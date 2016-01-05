@@ -18,22 +18,29 @@ and open the template in the editor.
         <script src="//d3js.org/topojson.v1.min.js"></script>
         <script src="//d3js.org/queue.v1.min.js"></script>
         <script src="interactive.maps.js"></script>
+        <script src="interactive.flights.js"></script>
         <script>
 
             var iMapObj = new iMap("map",{
                 width: 938,
-                height: 438
+                height: 438,
+                server_url: '/interactive_map_system'
             });
 
+            var iFlightObj;
             var loaded = function(error, data){
                 iMapObj.loaded(error, data);
+                iFlightObj = new iFlight(iMapObj.mapContainer,{path: iMapObj.mapPath});
+                iFlightObj.loaded(error,data);
             };
             
             var server_base_url = '/interactive_map_system';
             
             queue().defer(d3.json, server_base_url + "/maps/countries.topo.json")
-  //                 .defer(d3.json, server_base_url + "/maps/airports.topo.json")
+                   .defer(d3.json, server_base_url + "/maps/airports.topo.json")
                    .awaitAll(loaded);
+           
+           
         </script>
     </body>
 </html>

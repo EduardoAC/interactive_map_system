@@ -62,7 +62,7 @@ pre.prettyprint {
 }
 .route {
   fill: none;
-  stroke: white;
+  stroke: none;
   stroke-width: 1px;
 }
 .plane {
